@@ -82,11 +82,13 @@ export class KasirService {
     async getAllKasirs() {
         return this.prisma.kasir.findMany();
     }
-    async postCustomers() {
-        return this.prisma.kasir.create({
+    async createCustomers(customer_id: number, name: string) {
+        return this.prisma.customer.create({
             data: {
-                name: "Customers",
+                customer_id,
+                name,
             },
-        })
+        });
     }
+    
 }

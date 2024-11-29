@@ -182,19 +182,20 @@ export class KasirController {
             });
         }
     }
-       async getCustomers(req: Request, res: Response) {
-        const customers = await this.kasirService.postCustomers();
-        if(customers) {
-            res.status(200).send({
-                message: 'Customers retrieved successfully',
-                data: customers,
-                status: res.statusCode
+    async createCustomers(req: Request, res: Response) { 
+        const { customer_id, name } = req.body;
+        const customer = await this.kasirService.createCustomers(customer_id, name);
+        if (customer) {
+            res.status(201).send({
+                message: "Customer created successfully",
+                data: customer,
             });
         } else {
-            res.status(404).send({
-                message: 'No customers found',
+            res.status(500).send({
+                message: "Terjadi kesalahan saat membuat customer",
             });
         }
-       }
+    }
+    
 
 }
