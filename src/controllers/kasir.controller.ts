@@ -1,6 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { KasirService } from "../services/kasir.service";
-import { Products, transactions } from "../models/kasir";
+import { productSchema } from "../validators/validateProducts";
+import { transactionSchema } from "../validators/validateProducts";
+import { error } from "console";
+import { number } from "zod";
 
 
 export class KasirController {
@@ -26,8 +29,8 @@ export class KasirController {
     }
 
     async getProductById(req: Request, res: Response) {
-        const { product_id } = req.params;
-        const product = await this.kasirService.getProductById(parseInt(product_id));
+        const { id } = req.params;
+        const product = await this.kasirService.getProductById(parseInt(id));
         if (product) {
             res.status(200).send({
                 data: product,
@@ -58,21 +61,50 @@ export class KasirController {
         }
     }
 
-    async createProduct(req: Request, res: Response) {
-        const newProduct = await this.kasirService.createProduct(req.body);
-        if (newProduct) {
+    async createProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const validatedData = productSchema.safeParse(req.body);
+
+            if (!validatedData.success) {
+                const errors = validatedData.error.errors.map((error) => ({
+                    code: '',
+                    field: error.path[0],
+                    message: error.message,
+                    minimum: error.message.includes("kosong") ? "1" : undefined,
+                }));
+
+                res.status(400).send({
+                    message: "Validation failed",
+                    detail: errors,
+                    status: 400,
+                });
+            }
+
+            const { name, stock, price, expire_date, upcoming_product, code_product } = validatedData.data!;
+            const productDate = expire_date ? new Date(expire_date) : undefined;
+
+            const product = {
+                name,
+                stock: Number(stock),
+                price: Number(price),
+                expire_date: productDate,
+                upcoming_product,
+                code_product: code_product || `AUTO_${Date.now()}`,
+            };
+
+            const newProduct = await this.kasirService.createProduct(product);
+
             res.status(201).send({
-                message: 'Create product success',
+                message: "Product successfully created",
                 data: newProduct,
-                status: res.statusCode
+                status: 201,
             });
-        } else {
-            res.status(400).send({
-                message: 'Failed to create product',
-                status: res.statusCode
-            });
+
+        } catch (error) {
+            next(error);
         }
     }
+
     async deletedProduct(req: Request, res: Response) {
         const id = Number(req.params.id);
         const deleteTransaction = await this.kasirService.deteletdProduct(id);
@@ -89,66 +121,16 @@ export class KasirController {
             });
         }
     }
-
-    //    async getTransaction(req: Request, res: Response) {
-    //     const transaction = await this.kasirService.getTransaction();
-    //     if (transaction) {
-    //         res.status(200).send({
-    //             data: transaction,
-    //             status: res.statusCode
-    //         });
-    //     } else {
-    //         res.status(404).send({
-    //             message: 'Data not found',
-    //             status: res.statusCode
-    //         });
-    //     }
-    //    }
-  
     async getAllProducts(req: Request, res: Response) {
-        // Panggil service untuk mendapatkan semua produk
         const products = await this.kasirService.getAllProducts();
-    
-        // Jika ada produk, kembalikan data produk
         if (products.length > 0) {
-          res.status(200).send({
-            message: "Products retrieved successfully",
-            data: products,
-          });
-        } else {
-          res.status(404).send({
-            message: "No products found",
-          });
-        }
-    }
-    async createTransaction(req: Request, res: Response) {
-        const newTransaction = await this.kasirService.createTransaction(req.body);
-        if (newTransaction) {
-            res.status(201).send({
-                message: 'Create transaction success',
-                data: newTransaction,
-                status: res.statusCode
-            });
-        } else {
-            res.status(400).send({
-                message: 'Failed to create transaction',
-                status: res.statusCode
-            });
-        }
-    }
-
-    async getAllTransactions(req: Request, res: Response) {
-        // Panggil service untuk mendapatkan semua transaksi
-        const transactions = await this.kasirService.getAllTransactions();
-        if(transactions) {
             res.status(200).send({
-                message: 'Transactions retrieved successfully',
-                data: transactions,
-                status: res.statusCode
+                message: "Products retrieved successfully",
+                data: products,
             });
         } else {
             res.status(404).send({
-                message: 'No transactions found',
+                message: "No products found",
             });
         }
     }
@@ -168,9 +150,8 @@ export class KasirController {
         }
     }
     async getAllKasirs(req: Request, res: Response) {
-        // Panggil service untuk mendapatkan semua kasir
         const kasirs = await this.kasirService.getAllKasirs();
-        if(kasirs) {
+        if (kasirs) {
             res.status(200).send({
                 message: 'Kasirs retrieved successfully',
                 data: kasirs,
@@ -182,20 +163,19 @@ export class KasirController {
             });
         }
     }
-    async createCustomers(req: Request, res: Response) { 
-        const { customer_id, name } = req.body;
-        const customer = await this.kasirService.createCustomers(customer_id, name);
-        if (customer) {
-            res.status(201).send({
-                message: "Customer created successfully",
-                data: customer,
+    async getExpiredProducts(req: Request, res: Response) {
+        const expiredProducts = await this.kasirService.getExpiredProducts();
+        if (expiredProducts) {
+            res.status(200).send({
+                message: 'Expired products retrieved successfully',
+                data: expiredProducts,
+                status: res.statusCode
             });
         } else {
-            res.status(500).send({
-                message: "Terjadi kesalahan saat membuat customer",
+            res.status(404).send({
+                message: 'No expired products found',
             });
         }
     }
-    
 
 }

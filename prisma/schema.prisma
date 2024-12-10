@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
@@ -21,6 +15,8 @@ model Transactions {
   transactionDate DateTime @default(now())
   totalPrice      Float
   quantity        Int
+  total_product   Float    @default(0.0)
+  
 
   productId Int
   product   products @relation(fields: [productId], references: [product_id])
@@ -28,17 +24,22 @@ model Transactions {
   kasirId Int
   kasir   kasir @relation(fields: [kasirId], references: [kasir_id])
 
+  receipts        Receipt[] @relation("TransactionReceipts")
+
   customerId Int
-  customer   customer @relation(fields: [customerId], references: [customer_id])
 
   @@schema("kasir")
 }
 
 model products {
-  product_id Int    @id @default(autoincrement())
-  name       String
-  price      Float
-  stock      Int
+  product_id       Int      @id @default(autoincrement())
+  name             String
+  price            Float
+  stock            Int
+  expire_date      DateTime @default(now())
+  upcoming_product DateTime @default(now())
+  code_product     String   @unique
+  
 
   transactions Transactions[]
 
@@ -46,19 +47,28 @@ model products {
 }
 
 model kasir {
-  kasir_id Int    @id @default(autoincrement())
-  name     String
+  kasir_id       Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  password       String   @default("")
+  role           String   @default("user")
+  refresh_token  String?  @default("")
 
   transactions Transactions[]
 
   @@schema("kasir")
 }
 
-model customer {
-  customer_id Int    @id @default(autoincrement())
-  name        String
 
-  transactions Transactions[]
+model Receipt {
+  receipt_id    Int       @id @default(autoincrement())
+  amount        Float
+  date          DateTime  @default(now())
+  payment_method String
+
+  transactionId Int
+  transaction   Transactions @relation("TransactionReceipts", fields: [transactionId], references: [transaction_id])
 
   @@schema("kasir")
 }
+

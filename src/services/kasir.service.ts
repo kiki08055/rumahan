@@ -1,8 +1,19 @@
 import { PrismaClient } from "@prisma/client";
-import { Products, transactions } from "../models/kasir";
+import { Product } from "../models/kasir";
 
 export class KasirService {
     private prisma: PrismaClient;
+
+    calculateExpireDate(): Date {
+        const currentDate = new Date();
+        currentDate.setFullYear(currentDate.getFullYear() + 2);
+        return currentDate;
+    }
+    generateProductCode(name: string): string {
+        const timestamp = Date.now();
+        const productCode = `${name.substring(0, 3).toUpperCase()}${timestamp}`;
+        return productCode;
+    }
 
     constructor() {
         this.prisma = new PrismaClient();
@@ -13,6 +24,8 @@ export class KasirService {
     }
 
     async getProductById(product_id: number) {
+        console.log(product_id);
+
         return this.prisma.products.findUnique({
             where: {
                 product_id
@@ -20,7 +33,7 @@ export class KasirService {
         });
     }
 
-    async updateProduct(product_id: number, data: Products) {
+    async updateProduct(product_id: number, data: Product) {
         return this.prisma.products.update({
             where: { product_id },
             data: {
@@ -37,58 +50,40 @@ export class KasirService {
         });
     }
 
-    async createProduct(data: { name: string; stock: number; price: number }) {
-        return this.prisma.products.create({
-            data,
-        });
+    async createProduct(product: any) {
+        try {
+            const newProduct = await this.prisma.products.create({
+                data: product,
+            });
+            return newProduct;
+        } catch (error) {
+            throw new Error("Database error occurred while creating product.");
+        }
     }
 
     async getAllProducts() {
         return this.prisma.products.findMany();
     }
-    async createTransaction(data: {
-        productId: number;
-        quantity: number;
-        totalPrice: number;
-        kasirId: number;
-        customerId: number;
-    }) {
-        if (!data.customerId) {
-            throw new Error("customerId is required");
-        }
 
-        return this.prisma.transactions.create({
-            data: {
-                productId: data.productId,
-                quantity: data.quantity,
-                totalPrice: data.totalPrice,
-                created_at: new Date(),
-                kasirId: data.kasirId,
-                customerId: data.customerId,
-            }
-        });
-    }
-
-    async getAllTransactions() {
-        return this.prisma.transactions.findMany();
-    }
-    async createKasir(data: { name: string }) {
+    async createKasir(data: { name: string, email: string}) {
         return this.prisma.kasir.create({
             data: {
                 name: data.name,
+                email: data.email,
             },
         });
     }
     async getAllKasirs() {
         return this.prisma.kasir.findMany();
     }
-    async createCustomers(customer_id: number, name: string) {
-        return this.prisma.customer.create({
-            data: {
-                customer_id,
-                name,
-            },
+    async getExpiredProducts() {
+        return this.prisma.products.findMany({
+            where: {
+                expire_date: {
+                    lte: new Date()
+                }
+            }
         });
     }
-    
+
 }
