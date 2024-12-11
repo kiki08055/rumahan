@@ -14,9 +14,4 @@ router.get('/products/expired', kasirController.getExpiredProducts.bind(kasirCon
 router.post('/kasirs', kasirController.createKasir.bind(kasirController))
 router.get('/kasirs', kasirController.getAllKasirs.bind(kasirController))
 
-router.get('/transactions', transactionsController.getAllTransactions.bind(transactionsController));
-router.get('/transactions/:id', transactionsController.getTransactionsById.bind(transactionsController))
-router.post('/transactions', transactionsController.createTransactions.bind(transactionsController))
-router.put('/transactions/:id', transactionsController.updateTransactions.bind(transactionsController))
-
 export default router;

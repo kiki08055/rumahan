@@ -13,7 +13,6 @@ model Transactions {
   transaction_id  Int      @id @default(autoincrement())
   created_at      DateTime @default(now())
   transactionDate DateTime @default(now())
-  totalPrice      Float
   quantity        Int
   total_product   Float    @default(0.0)
   

@@ -13,7 +13,6 @@ export interface Product {
     customer_id: number;
     productId: number;
     quantity: number;
-    totalPrice: number;
     kasirId: number;
     transactionDate: Date;
     created_at: Date;

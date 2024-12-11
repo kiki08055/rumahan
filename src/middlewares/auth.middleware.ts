@@ -28,9 +28,11 @@ export class AuthenticateJwtMiddleware {
             }
         });
     }
-    authorizeRole(roles: string): any {
+    authorizeRole(roles: string[]): any {
         return (req: Request, res: Response, next: NextFunction) => {
-            if (!roles.includes((req as any).user.role)) {
+            const kasir = (req as any).kasir;
+    
+            if (!kasir || !roles.includes(kasir.role)) {
                 return res.status(403).send({
                     message: "Forbidden",
                     status: res.statusCode,
@@ -39,4 +41,5 @@ export class AuthenticateJwtMiddleware {
             next();
         };
     }
-}
+    
+}    

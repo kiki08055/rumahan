@@ -38,18 +38,18 @@ export class TransactionsController {
             })
         }
     }
-    async createTransactions(req: Request, res: Response, next: NextFunction): Promise<void> {
+    async createMultipleTransactions(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const validatedData = transactionSchema.safeParse(req.body);
-
+            const validatedData = transactionSchema.array().safeParse(req.body);
+    
             if (!validatedData.success) {
                 const errors = validatedData.error.errors.map((error) => ({
                     code: "01",
-                    field: error.path[0],
+                    field: error.path.join("."),
                     message: error.message,
                     minimum: error.message.includes("kosong") ? "1" : undefined,
                 }));
-
+    
                 res.status(400).send({
                     message: "Validation failed",
                     details: errors,
@@ -57,33 +57,35 @@ export class TransactionsController {
                 });
                 return;
             }
-
-            const { customerId, productId, quantity, totalPrice, kasirId, transactionDate, payment_method } = validatedData.data!;
-            const total_product = Number(quantity);
-
-            const transaction: Omit<Transactions, 'transaction_id'> = {
-                customerId: Number(customerId),
-                productId: Number(productId),
-                quantity: Number(quantity),
-                totalPrice: Number(totalPrice),
-                kasirId: Number(kasirId),
-                transactionDate,
-                total_product,
+    
+            const transactions = validatedData.data.map((item) => ({
+                customerId: Number(item.customerId),
+                productId: Number(item.productId),
+                quantity: Number(item.quantity),
+                kasirId: Number(item.kasirId),
+                transactionDate: item.transactionDate,
+                total_product: Number(item.quantity),
                 created_at: new Date(),
-            };
-
-            const newTransaction = await this.transactionService.createTransactions(transaction, payment_method);
-
+            }));
+    
+            const payment_method = req.body.payment_method || "cash";
+    
+            const newTransactions = await this.transactionService.createMultipleTransactions(
+                transactions, 
+                payment_method
+            );
+    
             res.status(201).send({
-                message: "Transaction successfully created",
-                data: newTransaction,
+                message: "Transactions successfully created",
+                data: newTransactions,
                 status: 201,
             });
+            return;
         } catch (error) {
             next(error);
         }
     }
-
+    
     async updateTransactions(req: Request, res: Response) {
         const id = Number(req.params.id);
         const updateTransactions = await this.transactionService.updateTransactions(id, req.body);

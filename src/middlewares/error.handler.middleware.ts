@@ -17,7 +17,7 @@ export class ErrorHandlerMiddleware {
                 detail: errors,
                 status: 400,
             });
-            return;
+            return; // Pastikan Anda menambahkan return setelah mengirim respons
         }
 
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -30,39 +30,38 @@ export class ErrorHandlerMiddleware {
                     status: 400,
                     detail: err.meta,
                 });
-                return;
+                return; // Pastikan Anda menambahkan return setelah mengirim respons
             }
         
-            console.error("Prisma Error:", err.message);  // Log error lainnya
+            console.error("Prisma Error:", err.message);
             res.status(500).send({
                 message: "Database error occurred",
                 status: 500,
                 detail: err.message,
             });
-            return;
+            return; // Pastikan Anda menambahkan return setelah mengirim respons
         }
         
-        // Handling other types of error
         if (err instanceof Error) {
-            // Cek apakah error message adalah teks biasa atau format JSON
-            if (err.message.startsWith("Database error occurred")) {
-                // Jika error adalah pesan dari Prisma, langsung tangani
-                res.status(500).send({
-                    message: "Database error occurred",
-                    detail: err.message,
-                    status: 500,
-                });
-            } else {
-                res.status(500).send({
-                    message: "Internal Server Error",
-                    detail: err.message,
-                    status: 500,
-                });
+            if (!res.headersSent) { // Periksa apakah respons sudah dikirim
+                if (err.message.startsWith("Database error occurred")) {
+                    res.status(500).send({
+                        message: "Database error occurred",
+                        detail: err.message,
+                        status: 500,
+                    });
+                } else {
+                    res.status(500).send({
+                        message: "Internal Server Error",
+                        detail: err.message,
+                        status: 500,
+                    });
+                }
             }
-            return;
+            return; // Pastikan Anda menambahkan return setelah mengirim respons
         }
 
-        // If no specific error, pass it to next middleware
-        next(err);
+        next(err); // Hanya lanjutkan jika tidak ada respons yang dikirim
     }
 }
+

@@ -50,20 +50,18 @@ export class AuthService {
             { id: kasir.kasir_id, role: kasir.role },
             JWT_SECRET,
             {
-                expiresIn: "7d", // Masa berlaku access token
+                expiresIn: "7d", 
             }
         );
 
-        // Membuat refresh token (masa berlaku lebih lama, biasanya berbulan-bulan)
         const refreshToken = jwt.sign(
             { id: kasir.kasir_id, role: kasir.role },
             JWT_SECRET,
             {
-                expiresIn: "30d", // Masa berlaku refresh token
+                expiresIn: "30d",
             }
         );
 
-        // Menyimpan refresh token di database
         await this.prisma.kasir.update({
             where: {
                 email: email,

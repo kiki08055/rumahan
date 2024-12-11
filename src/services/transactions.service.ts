@@ -18,45 +18,57 @@ export class TransactionService {
         });
     }
 
-    async createTransactions(transaction: Omit<Transactions, 'transaction_id'>, payment_method: string) {
+    async createMultipleTransactions(
+        transactions: Omit<Transactions, 'transaction_id'>[], 
+        payment_method: string
+    ) {
         try {
-            // Verifikasi apakah produk ada
-            const product = await this.prisma.products.findUnique({
-                where: { product_id: transaction.productId },
-            });
-            if (!product) {
-                throw new Error(`Product with ID ${transaction.productId} not found.`);
-            }
+            const results = await Promise.all(
+                transactions.map(async (transaction) => {
+                    const product = await this.prisma.products.findUnique({
+                        where: { product_id: transaction.productId },
+                    });
     
-            // Verifikasi apakah kasir ada
-            const kasir = await this.prisma.kasir.findUnique({
-                where: { kasir_id: transaction.kasirId },
-            });
-            if (!kasir) {
-                throw new Error(`Kasir with ID ${transaction.kasirId} not found.`);
-            }
+                    if (!product) {
+                        throw new Error(`Product with ID ${transaction.productId} not found.`);
+                    }
     
-            // Jika produk dan kasir ada, lanjutkan transaksi
-            const newTransaction = await this.prisma.transactions.create({
-                data: transaction,
-            });
+                    const kasir = await this.prisma.kasir.findUnique({
+                        where: { kasir_id: transaction.kasirId },
+                    });
     
-            const newReceipt = await this.prisma.receipt.create({
-                data: {
-                    amount: newTransaction.totalPrice,
-                    date: newTransaction.transactionDate || new Date(),
-                    payment_method: payment_method || 'cash',
-                    transactionId: newTransaction.transaction_id,
-                },
-            });
+                    if (!kasir) {
+                        throw new Error(`Kasir with ID ${transaction.kasirId} not found.`);
+                    }
     
-            return {
-                ...newTransaction,
-                receipts: [newReceipt],
-            };
+                    const totalPrice = product.price * transaction.quantity;
+    
+                    const newTransaction = await this.prisma.transactions.create({
+                        data: {
+                            ...transaction,
+                        },
+                    });
+    
+                    const newReceipt = await this.prisma.receipt.create({
+                        data: {
+                            amount: totalPrice,
+                            date: newTransaction.transactionDate || new Date(),
+                            payment_method: payment_method || 'cash',
+                            transactionId: newTransaction.transaction_id,
+                        },
+                    });
+    
+                    return {
+                        ...newTransaction,
+                        receipts: [newReceipt],
+                    };
+                })
+            );
+    
+            return results; 
         } catch (error) {
-            console.error("Error while creating transaction:", error);
-            throw new Error("Database error occurred while creating transaction.");
+            console.error("Error while creating multiple transactions:", error);
+            throw new Error("Database error occurred while creating multiple transactions.");
         }
     }
     
