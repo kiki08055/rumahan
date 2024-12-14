@@ -10,64 +10,64 @@ datasource db {
 }
 
 model Transactions {
-  transaction_id  Int      @id @default(autoincrement())
-  created_at      DateTime @default(now())
-  transactionDate DateTime @default(now())
-  quantity        Int
-  total_product   Float    @default(0.0)
+  transaction_id   Int       @id @default(autoincrement())
+  created_at       DateTime  @default(now())
+  transactionDate  DateTime  @default(now())
+  total_product    Float     @default(0.0)
+  quantity         Int
+  
   
 
-  productId Int
-  product   products @relation(fields: [productId], references: [product_id])
+  productId        Int
+  product          products  @relation(fields: [productId], references: [product_id])
 
-  kasirId Int
-  kasir   kasir @relation(fields: [kasirId], references: [kasir_id])
+  kasirId          Int
+  kasir            kasir     @relation(fields: [kasirId], references: [kasir_id])
 
-  receipts        Receipt[] @relation("TransactionReceipts")
+  receipts         Receipt[] @relation("TransactionReceipts")
 
-  customerId Int
+  customerId       Int?
 
   @@schema("kasir")
 }
 
 model products {
-  product_id       Int      @id @default(autoincrement())
+  product_id       Int       @id @default(autoincrement())
   name             String
   price            Float
   stock            Int
-  expire_date      DateTime @default(now())
-  upcoming_product DateTime @default(now())
-  code_product     String   @unique
-  
+  expire_date      DateTime  @default(now())
+  upcoming_product DateTime  @default(now())
+  code_product     String    @unique
 
-  transactions Transactions[]
+  transactions     Transactions[]
 
   @@schema("kasir")
 }
 
 model kasir {
-  kasir_id       Int      @id @default(autoincrement())
+  kasir_id       Int          @id @default(autoincrement())
   name           String
-  email          String   @unique
-  password       String   @default("")
-  role           String   @default("user")
-  refresh_token  String?  @default("")
+  email          String       @unique
+  password       String       @default("")
+  role           String       @default("user")
+  refresh_token  String?      @default("")
 
-  transactions Transactions[]
+  transactions   Transactions[]
 
   @@schema("kasir")
 }
-
 
 model Receipt {
-  receipt_id    Int       @id @default(autoincrement())
-  amount        Float
-  date          DateTime  @default(now())
+  receipt_id     Int           @id @default(autoincrement())
+  amount         Float
+  date           DateTime      @default(now())
   payment_method String
 
-  transactionId Int
-  transaction   Transactions @relation("TransactionReceipts", fields: [transactionId], references: [transaction_id])
+  transactionId  Int
+  transaction    Transactions  @relation("TransactionReceipts", fields: [transactionId], references: [transaction_id])
 
   @@schema("kasir")
 }
+
 

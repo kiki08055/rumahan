@@ -10,7 +10,7 @@ export interface Product {
   
   export interface Transaction {
     transaction_id?: number;
-    customer_id: number;
+    customerId: number;
     productId: number;
     quantity: number;
     kasirId: number;
@@ -33,4 +33,5 @@ export interface Product {
     role: string;
     name: string
   }
+  
   

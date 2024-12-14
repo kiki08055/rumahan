@@ -45,14 +45,17 @@ export class TransactionService {
     
                     const newTransaction = await this.prisma.transactions.create({
                         data: {
-                            ...transaction,
+                            productId: transaction.productId, 
+                            quantity: transaction.quantity,
+                            kasirId: transaction.kasirId,
+                            customerId: transaction.customerId,
+                            transactionDate: transaction.transactionDate || new Date(),
                         },
                     });
-    
                     const newReceipt = await this.prisma.receipt.create({
                         data: {
                             amount: totalPrice,
-                            date: newTransaction.transactionDate || new Date(),
+                            date: newTransaction.transactionDate,
                             payment_method: payment_method || 'cash',
                             transactionId: newTransaction.transaction_id,
                         },
@@ -65,13 +68,13 @@ export class TransactionService {
                 })
             );
     
-            return results; 
+            return results;
         } catch (error) {
             console.error("Error while creating multiple transactions:", error);
             throw new Error("Database error occurred while creating multiple transactions.");
         }
     }
-    
+     
     async updateTransactions(transaction_id: number, updatedTransaction: any) {
         return this.prisma.transactions.update({
             where: {
