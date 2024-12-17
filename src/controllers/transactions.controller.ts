@@ -1,43 +1,59 @@
 import { Request, Response, NextFunction } from "express";
-import { TransactionService } from "../services/transactions.service";
+import { TransactionService } from "../services/transactions.service"
 import { transactionSchema } from "../validators/validateProducts";
-import { Transactions } from "@prisma/client";
 
 export class TransactionsController {
-    private transactionService: TransactionService
+    private transactionService: TransactionService;
 
     constructor() {
         this.transactionService = new TransactionService();
     }
+
     async getAllTransactions(req: Request, res: Response) {
-        const transactions = await this.transactionService.getAllTransactions();
-        if (transactions.length > 0) {
-            res.status(200).send({
-                message: 'Transactions retrieved successfully',
-                data: transactions,
-                status: res.statusCode
-            })
-        } else {
-            res.status(404).send({
-                message: 'transaction not found'
-            })
+        try {
+            const transactions = await this.transactionService.getAllTransactions();
+            if (transactions.length > 0) {
+                res.status(200).send({
+                    message: 'Transactions retrieved successfully',
+                    data: transactions,
+                    status: res.statusCode,
+                });
+            } else {
+                res.status(404).send({
+                    message: 'No transactions found',
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+            res.status(500).send({
+                message: 'Error fetching transactions',
+            });
         }
     }
+
     async getTransactionsById(req: Request, res: Response) {
-        const { id } = req.params;
-        const transactions = await this.transactionService.getTransactionsById(parseInt(id));
-        if (transactions) {
-            res.status(200).send({
-                data: transactions,
-                status: res.statusCode
-            })
-        } else {
-            res.status(404).send({
-                message: "data not found",
-                status: res.statusCode
-            })
+        try {
+            const { id } = req.params;
+            const transaction = await this.transactionService.getTransactionsById(Number(id));
+            if (transaction) {
+                res.status(200).send({
+                    data: transaction,
+                    status: res.statusCode,
+                });
+            } else {
+                res.status(404).send({
+                    message: 'Transaction not found',
+                    status: res.statusCode,
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching transaction by ID:", error);
+            res.status(500).send({
+                message: 'Error fetching transaction by ID',
+            });
         }
     }
+
     async createMultipleTransactions(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const validatedData = transactionSchema.array().safeParse(req.body);
@@ -46,7 +62,6 @@ export class TransactionsController {
                 const errors = validatedData.error.errors.map((error) => ({
                     code: "01",
                     field: error.path.join("."),
-                    message: error.message,
                     minimum: error.message.includes("kosong") ? "1" : undefined,
                 }));
     
@@ -70,6 +85,7 @@ export class TransactionsController {
     
             const payment_method = req.body.payment_method || "cash";
     
+            // Memanggil fungsi untuk membuat transaksi di PostgreSQL dan MongoDB
             const newTransactions = await this.transactionService.createMultipleTransactions(
                 transactions, 
                 payment_method
@@ -80,26 +96,74 @@ export class TransactionsController {
                 data: newTransactions,
                 status: 201,
             });
-            return;
         } catch (error) {
+            console.error("Error creating multiple transactions:", error);
             next(error);
         }
     }
-    
-    async updateTransactions(req: Request, res: Response) {
+
+    // Fungsi untuk mendapatkan riwayat transaksi yang ada di MongoDB
+    async getTransactionHistory(req: Request, res: Response) {
+        const { limit = 10, page = 1, customerId, payment_method, startDate, endDate } = req.query;
+
+        const filters: any = {};
+        if (customerId) filters.customerId = customerId;
+        if (payment_method) filters.payment_method = payment_method;
+        if (startDate) filters.startDate = new Date(startDate as string);
+        if (endDate) filters.endDate = new Date(endDate as string);
+
+        try {
+            // Mengambil riwayat transaksi dari MongoDB dengan filter dan paginasi
+            const transactions = await this.transactionService.getTransactionHistory(
+                Number(limit),
+                Number(page),
+                filters
+            );
+
+            res.status(200).json({
+                success: true,
+                page: Number(page),
+                limit: Number(limit),
+                data: transactions
+            });
+        } catch (error) {
+            console.error("Error fetching transaction history:", error);
+            res.status(500).json({
+                success: false,
+                message: "Error fetching transaction history",
+            });
+        }
+    }
+    async updateTransactions(req: Request, res: Response){
         const id = Number(req.params.id);
-        const updateTransactions = await this.transactionService.updateTransactions(id, req.body);
-        if (updateTransactions) {
+        const updatedTransaction = await this.transactionService.updateTransactions(id, req.body);
+        if (updatedTransaction) {
             res.status(201).send({
-                message: 'Update Transactions success',
-                data: updateTransactions,
-                status: res.statusCode
+                message: 'Transaction updated successfully',
+                status: res.statusCode,
+                data: updatedTransaction,
             });
         } else {
             res.status(404).send({
-                message: 'Failed to Transactions ',
-                status: res.statusCode
+                message: 'Transaction not found',
+                status: res.statusCode,
             });
         }
+    }
+
+    async deleteTransactions(req: Request, res: Response) {
+      const id = Number(req.params.id);
+      const deletedTransaction = await this.transactionService.deleteTransactions(id);
+      if (deletedTransaction) {
+        res.status(200).send({
+          message: 'Transaction deleted successfully',
+          status: res.statusCode,
+        });
+      } else {
+        res.status(400).send({
+          message: 'Failed to delete transaction',
+          status: res.statusCode,
+        });
+      }
     }
 }

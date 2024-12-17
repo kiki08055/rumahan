@@ -19,8 +19,8 @@ export const transactionSchema = z.object({
   totalPrice: z.number().min(1, { message: "Total price must be a valid number" }),
   kasirId: z.number().min(1, { message: "Kasir ID must be a valid number" }),
   transactionDate: z.preprocess(
-    (arg) => (typeof arg === "string" ? new Date(arg) : arg), // Proses input string menjadi Date
-    z.date() // Validasi harus berupa Date
+    (arg) => (typeof arg === "string" ? new Date(arg) : arg), 
+    z.date() 
   ),
   payment_method: z.string().min(1, { message: "Payment method is required" }),
 });

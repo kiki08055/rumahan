@@ -11,7 +11,33 @@ router.post(
     transactionsController.createMultipleTransactions.bind(transactionsController)
   );
   
-router.get('/transactions/:id', transactionsController.getTransactionsById.bind(transactionsController))
-router.put('/transactions/:id', transactionsController.updateTransactions.bind(transactionsController))
+router.get(
+  '/transactions/:id',
+  authMiddleware.authenticateToken.bind(authMiddleware),
+  authMiddleware.authorizeRole(['admin']).bind(authMiddleware), 
+   transactionsController.getTransactionsById.bind(transactionsController))
+
+router.put('/transactions/:id', 
+  authMiddleware.authenticateToken.bind(authMiddleware),
+  authMiddleware.authorizeRole(['admin']).bind(authMiddleware), 
+  transactionsController.updateTransactions.bind(transactionsController))
+
+router.get(
+  '/transactions',
+  authMiddleware.authenticateToken.bind(authMiddleware),
+  authMiddleware.authorizeRole(['admin']).bind(authMiddleware), 
+  transactionsController.getAllTransactions.bind(transactionsController))
+
+router.get(
+  '/transactions-history', 
+  authMiddleware.authenticateToken.bind(authMiddleware),
+  authMiddleware.authorizeRole(['admin']).bind(authMiddleware),
+  transactionsController.getTransactionHistory.bind(transactionsController))
+
+router.delete(
+  '/transactions',
+  authMiddleware.authenticateToken.bind(authMiddleware),
+  authMiddleware.authorizeRole(['admin']).bind(authMiddleware), 
+   transactionsController.deleteTransactions.bind(transactionsController))
 
 export default router;

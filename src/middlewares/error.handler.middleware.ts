@@ -17,7 +17,7 @@ export class ErrorHandlerMiddleware {
                 detail: errors,
                 status: 400,
             });
-            return; // Pastikan Anda menambahkan return setelah mengirim respons
+            return;
         }
 
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -30,7 +30,7 @@ export class ErrorHandlerMiddleware {
                     status: 400,
                     detail: err.meta,
                 });
-                return; // Pastikan Anda menambahkan return setelah mengirim respons
+                return;
             }
         
             console.error("Prisma Error:", err.message);
@@ -39,11 +39,11 @@ export class ErrorHandlerMiddleware {
                 status: 500,
                 detail: err.message,
             });
-            return; // Pastikan Anda menambahkan return setelah mengirim respons
+            return;
         }
         
         if (err instanceof Error) {
-            if (!res.headersSent) { // Periksa apakah respons sudah dikirim
+            if (!res.headersSent) { 
                 if (err.message.startsWith("Database error occurred")) {
                     res.status(500).send({
                         message: "Database error occurred",
@@ -58,10 +58,10 @@ export class ErrorHandlerMiddleware {
                     });
                 }
             }
-            return; // Pastikan Anda menambahkan return setelah mengirim respons
+            return;
         }
 
-        next(err); // Hanya lanjutkan jika tidak ada respons yang dikirim
+        next(err); 
     }
 }
 
