@@ -5,6 +5,7 @@ import transactionRouter from './routers/transaction.router';
 import { ErrorHandlerMiddleware } from './middlewares/error.handler.middleware';
 import authRouter from './routers/auth.router';
 import mongoose from 'mongoose';
+import cors from 'cors'
 
 environment.config();
 
@@ -23,10 +24,13 @@ mongoose.connect(mongoURI || 'mongodb://localhost:27017/default_database')
     console.error('Error connecting to MongoDB:', error);
   });
 
+app.use(cors())
 app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:3000'
+}))
 app.use('/api/kasir', kasirRouter);
 app.use('/api/transaction', transactionRouter);
-
 app.use("/api/auth", authRouter);
 
 app.use(errorHandler.errorHandler);

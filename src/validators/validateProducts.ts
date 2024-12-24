@@ -10,8 +10,6 @@ export const productSchema = z.object({
 
 });
 
-
-
 export const transactionSchema = z.object({
   customerId: z.number().min(1, { message: "Customer ID must be a valid number" }),
   productId: z.number().min(1, { message: "Product ID must be a valid number" }),

@@ -37,29 +37,30 @@ export class Authcontroller {
     
     async login(req: Request, res: Response) {
         try {
-            const { email, password } = req.body;
-            const { accessToken, refreshToken, kasir} = await this.authService.login(
-                email,
+            const { email, password } = req.body;  // Ganti email menjadi name
+            const { accessToken, refreshToken, kasir } = await this.authService.login(
+                email,  // Pass name ke service
                 password
             );
-            const data = { accessToken, refreshToken, kasir}
+    
+            const data = { accessToken, refreshToken, kasir };
             res.status(200).send({
                 data: {
                     kasir: data.kasir,
                     access_token: data.accessToken,
-                    refresh_token: data.refreshToken
+                    refresh_token: data.refreshToken,
                 },
-                message: "successfully logged in",
-                status: res.statusCode
+                message: "Successfully logged in",
+                status: res.statusCode,
             });
         } catch (error: any) {
             res.status(401).send({
-                message: `failed to login`,
-                status: res.statusCode
+                message: `Failed to login: ${error.message}`,
+                status: res.statusCode,
             });
-            
         }
     }
+    
     async refreshToken(req: Request, res: Response) {
         const { refreshToken } = req.body;
         const data = await this.authService.refreshToken(refreshToken)
