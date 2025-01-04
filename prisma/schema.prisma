@@ -36,8 +36,8 @@ model products {
   name             String
   price            Float
   stock            Int
-  expire_date      DateTime  @default(now())
-  upcoming_product DateTime  @default(now())
+  expire_date      DateTime?
+  upcoming_product DateTime?
   code_product     String    @unique
 
   transactions     Transactions[]

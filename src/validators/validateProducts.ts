@@ -1,13 +1,18 @@
 import { z } from "zod";
 
 export const productSchema = z.object({
-  name: z.string().min(1, { message: "Nama produk tidak boleh kosong" }), 
-   stock: z.number().min(1, { message: "Stock harus lebih dari 0" }), 
-  price: z.number().min(1, { message: "Harga harus lebih dari 0" }), 
-  expire_date: z.string().optional(), 
+  name: z.string().min(1, { message: "Nama produk tidak boleh kosong" }),
+  stock: z.number().min(1, { message: "Stock harus lebih dari 0" }),
+  price: z.number().min(1, { message: "Harga harus lebih dari 0" }),
+  expire_date: z
+    .string()
+    .refine(
+      (value) => !isNaN(Date.parse(value)),
+      { message: "Tanggal kadaluarsa harus dalam format yang valid (YYYY-MM-DD)" }
+    )
+    .optional(), // Optional jika tidak wajib
   upcoming_product: z.string().min(1, { message: "Upcoming product cannot be empty" }).optional(),
-  code_product: z.string().optional()
-
+  code_product: z.string().optional(),
 });
 
 export const transactionSchema = z.object({

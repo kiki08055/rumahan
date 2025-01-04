@@ -15,6 +15,13 @@ export class KasirService {
         return productCode;
     }
 
+    calculateUpcomingProduct(): Date {
+        const currentDate = new Date();
+        currentDate.setDate(currentDate.getDate() + 30); // 30 hari dari sekarang
+        return currentDate;
+    }
+    
+
     constructor() {
         this.prisma = new PrismaClient();
     }
@@ -52,14 +59,24 @@ export class KasirService {
 
     async createProduct(product: any) {
         try {
+            const expireDate = this.calculateExpireDate();
+            const productCode = this.generateProductCode(product.name);
+            const upcomingProduct = this.calculateUpcomingProduct();
             const newProduct = await this.prisma.products.create({
-                data: product,
+                data: {
+                    ...product,
+                    expire_date: expireDate, 
+                    code_product: productCode,
+                    upcoming_product: upcomingProduct,
+                },
             });
             return newProduct;
-        } catch (error) {
+        } catch (error: any) {
+            console.error("Error detail:", error); 
             throw new Error("Database error occurred while creating product.");
         }
     }
+     
 
     async getAllProducts() {
         return this.prisma.products.findMany();
@@ -77,13 +94,16 @@ export class KasirService {
         return this.prisma.kasir.findMany();
     }
     async getExpiredProducts() {
-        return this.prisma.products.findMany({
+        const expiredProducts = await this.prisma.products.findMany({
             where: {
                 expire_date: {
                     lte: new Date()
                 }
             }
         });
+        
+        console.log('Expired Products:', expiredProducts);
+        return expiredProducts;
     }
-
+    
 }
